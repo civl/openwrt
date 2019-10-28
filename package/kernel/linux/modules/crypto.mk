@@ -361,6 +361,55 @@ endef
 $(eval $(call KernelPackage,crypto-hw-padlock))
 
 
+define KernelPackage/crypto-hw-qce
+  TITLE:=Qualcomm Crypto Engine hw crypto module
+  DEPENDS:= @TARGET_ipq40xx +kmod-crypto-manager \
+	+QCE_SKCIPHER:kmod-crypto-des \
+	+QCE_SKCIPHER:kmod-crypto-ecb \
+	+QCE_SKCIPHER:kmod-crypto-cbc \
+	+QCE_SKCIPHER:kmod-crypto-xts \
+	+QCE_SKCIPHER:kmod-crypto-ctr
+  KCONFIG:= \
+	CONFIG_CRYPTO_HW=y \
+	CONFIG_CRYPTO_DEV_QCE
+  FILES:= $(LINUX_DIR)/drivers/crypto/qce/qcrypto.ko
+  AUTOLOAD:=$(call AutoLoad,09,qcrypto)
+  $(call AddDepends/crypto)
+endef
+
+define KernelPackage/crypto-hw-qce/config
+  if PACKAGE_kmod-crypto-hw-qce
+	config QCE_SKCIPHER
+		bool
+	choice
+		prompt "Algorithms enabled for QCE acceleration"
+		default KERNEL_CRYPTO_DEV_QCE_ENABLE_SKCIPHER
+		help
+		  The Qualcomm Crypto Engine is shown to severely slowdown ipsec,
+		  especially when built with all supported algorithms.  One user
+		  reports speeds of 40-60Mbps without the Crypto Engine, 10Mbps with
+		  QCE using block ciphers only, 5Mbps using Hash/HMAC only, and <1Mbps
+		  when selecting all supported algorithms.
+		  OpenSSL, using /dev/crypto shows a speedup for block ciphers with
+		  larger blocks.  In OpenSSL, hashes are slow, problematic, and
+		  disabled by default.  So it is recommended to use QCE for block
+		  ciphers only.
+
+		config KERNEL_CRYPTO_DEV_QCE_ENABLE_ALL
+			bool "All supported algorithms"
+			select QCE_SKCIPHER
+		config KERNEL_CRYPTO_DEV_QCE_ENABLE_SKCIPHER
+			bool "Symmetric-key ciphers only"
+			select QCE_SKCIPHER
+		config KERNEL_CRYPTO_DEV_QCE_ENABLE_SHA
+			bool "Hash/HMAC only"
+	endchoice
+  endif
+endef
+
+$(eval $(call KernelPackage,crypto-hw-qce))
+
+
 define KernelPackage/crypto-hw-safexcel
   TITLE:= MVEBU SafeXcel Crypto Engine module
   DEPENDS:=@!LINUX_4_14 @(TARGET_mvebu_cortexa53||TARGET_mvebu_cortexa72) \
