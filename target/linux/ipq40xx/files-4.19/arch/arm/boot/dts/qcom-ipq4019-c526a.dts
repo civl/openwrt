@@ -253,8 +253,10 @@
 };
 
 &pcie0 {
+	pinctrl-0 = <&perst>;
+	pinctrl-names = "default";
 	status = "okay";
-	perst-gpios = <&tlmm 38 GPIO_ACTIVE_LOW>;
+	perst-gpios = <&tlmm 4 GPIO_ACTIVE_LOW>;
 	wake-gpios = <&tlmm 50 GPIO_ACTIVE_LOW>;
 
 	bridge@0,0 {
@@ -296,6 +298,13 @@
 			pins = "gpio16", "gpio17";
 			function = "blsp_uart0";
 			bias-disable;
+		};
+	};
+
+	perst: perst {
+		mux {
+			pins = "gpio38";
+			output-low;
 		};
 	};
 };
